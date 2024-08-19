@@ -9,7 +9,7 @@ images:
 
 deploy:
   # [USER] Specify the number of nodes in the cluster.
-  replicas: 3
+  replicas: 1
 
   clusterDomain: cluster.local
 
@@ -75,8 +75,6 @@ deploy:
   nameOverride: ""
 
   resourceLabels: []
-
-  podAnnotations: []
 
   podLabels: []
 

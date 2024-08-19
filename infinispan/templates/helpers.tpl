@@ -42,16 +42,6 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
-Pod custom Annotations
-*/}}
-
-{{- define "infinispan-helm-charts.podAnnotations" -}}
-{{- range .Values.deploy.podAnnotations }}
-{{ .key }}: {{ .value }}
-{{- end }}
-{{- end }}
-
-{{/*
 Pod custom labels
 */}}
 

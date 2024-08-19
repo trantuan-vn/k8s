@@ -66,4 +66,7 @@ sudo nano /etc/hosts #127.0.0.1 auth.smartconsultor.com
 sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
 
 #8 infinispan
-helm install infinispan ./infinispan_v1 --namespace infinispan
+helm install infinispan ./infinispan --namespace infinispan
+#9 microservices
+sudo kubectl port-forward svc/keycloak 443:443 -n keycloak  --address 192.168.220.190
+sudo minikube tunnel

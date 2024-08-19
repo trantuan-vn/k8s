@@ -1,10 +1,10 @@
 {
     "properties": {
         "images": {
-            "description": "Sets the images used by the {brandname} cluster.",
+            "description": "Sets the images used by the Infinispan cluster.",
             "properties": {
                 "server": {
-                    "description": "{brandname} Server image.",
+                    "description": "Infinispan Server image.",
                     "type": [
                         "string",
                         "null"
@@ -24,7 +24,7 @@
             ]
         },
         "deploy": {
-            "description": "Configuration properties for {brandname} clusters.",
+            "description": "Configuration properties for Infinispan clusters.",
             "properties": {
                 "monitoring": {
                     "description": "Configuration for ServiceMonitor",
@@ -45,14 +45,14 @@
                     "default": "cluster.local"
                 },
                 "replicas": {
-                    "description": "Number of pods in the {brandname} cluster.",
+                    "description": "Number of pods in the Infinispan cluster.",
                     "type": "integer"
                 },
                 "container": {
-                    "description": "JVM, CPU, and memory resources for {brandname} pods.",
+                    "description": "JVM, CPU, and memory resources for Infinispan pods.",
                     "properties": {
                         "imagePullPolicy": {
-                            "description": "The {brandname} image pull policy.",
+                            "description": "The Infinispan image pull policy.",
                             "enum": [
                                 "",
                                 "IfNotPresent",
@@ -66,7 +66,7 @@
                             "default": "Always"
                         },
                         "extraJvmOpts": {
-                            "description": "Passes JVM options to {brandname} Server.",
+                            "description": "Passes JVM options to Infinispan Server.",
                             "type": [
                                 "string",
                                 "null"
@@ -87,14 +87,14 @@
                             ]
                         },
                         "storage": {
-                            "description": "Storage resources for {brandname} pods.",
+                            "description": "Storage resources for Infinispan pods.",
                             "properties": {
                                 "ephemeral": {
                                     "description": "Defines whether storage is ephemeral or permanent. If true, then all persisted data is deleted when clusters shut down or restart.",
                                     "type": "boolean"
                                 },
                                 "size": {
-                                    "description": "Defines how much storage is allocated to each {brandname} pod.",
+                                    "description": "Defines how much storage is allocated to each Infinispan pod.",
                                     "type": "string"
                                 },
                                 "storageClassName": {
@@ -111,16 +111,16 @@
                             ]
                         },
                         "resources": {
-                            "description": "CPU and Memory resources for {brandname} pods.",
+                            "description": "CPU and Memory resources for Infinispan pods.",
                             "properties": {
                                 "limits": {
                                     "properties": {
                                         "cpu": {
-                                            "description": "Defines the CPU limit, in CPU units, for each {brandname} pod.",
+                                            "description": "Defines the CPU limit, in CPU units, for each Infinispan pod.",
                                             "type": "string"
                                         },
                                         "memory": {
-                                            "description": "Defines the memory limit, in bytes, for each {brandname} pod.",
+                                            "description": "Defines the memory limit, in bytes, for each Infinispan pod.",
                                             "type": "string"
                                         }
                                     },
@@ -132,11 +132,11 @@
                                 "requests": {
                                     "properties": {
                                         "cpu": {
-                                            "description": "Specifies the maximum CPU requests, in CPU units, for each {brandname} pod.",
+                                            "description": "Specifies the maximum CPU requests, in CPU units, for each Infinispan pod.",
                                             "type": "string"
                                         },
                                         "memory": {
-                                            "description": "Specifies the maximum memory requests, in bytes, for each {brandname} pod.",
+                                            "description": "Specifies the maximum memory requests, in bytes, for each Infinispan pod.",
                                             "type": "string"
                                         }
                                     },
@@ -158,7 +158,7 @@
                     ]
                 },
                 "security": {
-                    "description": "Controls access to {brandname} clusters.",
+                    "description": "Controls access to Infinispan clusters.",
                     "properties": {
                         "secretName": {
                             "description": "Specifies the name of a secret that creates credentials and configures security authorization.",
@@ -168,7 +168,7 @@
                             ]
                         },
                         "batch": {
-                            "description": "Provides a batch file for the {brandname} command line interface (CLI) to create credentials and configure security authorization.",
+                            "description": "Provides a batch file for the Infinispan command line interface (CLI) to create credentials and configure security authorization.",
                             "type": [
                                 "string",
                                 "null"
@@ -220,10 +220,10 @@
                     ]
                 },
                 "expose": {
-                    "description": "Controls network access to {brandname} Server endpoints.",
+                    "description": "Controls network access to Infinispan Server endpoints.",
                     "properties": {
                         "type": {
-                            "description": "Specifies the service that exposes Hot Rod and REST endpoints on the network. Set an empty value (\"\") if you do not want to allow network access to {brandname}.",
+                            "description": "Specifies the service that exposes Hot Rod and REST endpoints on the network. Set an empty value (\"\") if you do not want to allow network access to Infinispan.",
                             "enum": [
                                 "",
                                 "LoadBalancer",
@@ -248,7 +248,7 @@
                             ]
                         },
                         "annotations": {
-                            "description": "Adds annotations to the service that exposes {brandname} on the network.",
+                            "description": "Adds annotations to the service that exposes Infinispan on the network.",
                             "items": {
                                 "properties": {
                                     "key": {
@@ -275,18 +275,18 @@
                     ]
                 },
                 "logging": {
-                    "description": "Configures logging categories and levels for {brandname} Server.",
+                    "description": "Configures logging categories and levels for Infinispan Server.",
                     "properties": {
                         "categories": {
-                            "description": "Adjusts the type and number of messages that {brandname} logs.",
+                            "description": "Adjusts the type and number of messages that Infinispan logs.",
                             "items": {
                                 "properties": {
                                     "category": {
-                                        "description": "Specifies the FQN of a {brandname} package for which you want to configure logging.",
+                                        "description": "Specifies the FQN of a Infinispan package for which you want to configure logging.",
                                         "type": "string"
                                     },
                                     "level": {
-                                        "description": "Specifies the level at which {brandname} logs messages for this package.",
+                                        "description": "Specifies the level at which Infinispan logs messages for this package.",
                                         "default": "info",
                                         "enum": [
                                             "trace",
@@ -310,27 +310,6 @@
                             ]
                         }
                     }
-                },
-                "podAnnotations": {
-                    "description": "Adds annotations to every pod created",
-                    "items": {
-                        "properties": {
-                            "key": {
-                                "type": "string"
-                            },
-                            "value": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "key",
-                            "value"
-                        ]
-                    },
-                    "type": [
-                        "array",
-                        "null"
-                    ]
                 },
                 "podLabels": {
                     "description": "Adds labels to every pod created",
@@ -375,7 +354,7 @@
                     ]
                 },
                 "resourceLabels": {
-                    "description": "Adds labels to {brandname} resources such as pods and services.",
+                    "description": "Adds labels to Infinispan resources such as pods and services.",
                     "items": {
                         "properties": {
                             "key": {
@@ -482,7 +461,7 @@
                                                                   "minLength": 1
                                                                }
                                                             },
-                                                         "required": ["alias","path","password"]
+                                                         "required": ["path"]
 
                                                          }
                                                       }
