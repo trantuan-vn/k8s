@@ -1299,7 +1299,7 @@ externalDatabase:
   host: "citus-master.citus.svc.cluster.local"
   port: 5432
   user: smartconsultor
-  database: smartconsultor
+  database: keycloak
   password: "secret99"
   existingSecret: ""
   existingSecretHostKey: ""

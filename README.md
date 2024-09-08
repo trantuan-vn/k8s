@@ -10,6 +10,9 @@ kubectl create namespace pulsar
 kubectl create namespace infinispan
 kubectl create namespace citus
 kubectl create namespace microservices
+kubectl create namespace redis
+kubectl create namespace superset
+
 #4. tạo các serviceaccount
 kubectl create serviceaccount cert-manager-controller -n cert-manager
 kubectl create serviceaccount keycloak-admin -n keycloak
@@ -38,6 +41,8 @@ ALTER USER smartconsultor SUPERUSER;
 ALTER USER smartconsultor CREATEDB CREATEROLE;
 CREATE DATABASE smartconsultor;
 CREATE DATABASE superset;
+CREATE DATABASE keycloak;
+
 -- master, all worker
 psql -U smartconsultor -d smartconsultor
 CREATE SCHEMA standing;
@@ -70,3 +75,28 @@ helm install infinispan ./infinispan --namespace infinispan
 #9 microservices
 sudo kubectl port-forward svc/keycloak 443:443 -n keycloak  --address 192.168.220.190
 sudo minikube tunnel
+
+#10 pulsar
+-- citus for pulsar
+kubectl exec -it citus-master-0 -n citus -- psql -U smartconsultor -d smartconsultor -f - < ./k8s/pulsar/postgresql-schema.sql
+-- install pulsar
+helm repo add apache https://pulsar.apache.org/charts
+helm search repo pulsar
+helm repo update
+helm pull apache/pulsar --version 3.5.0
+helm install  pulsar ./pulsar --namespace pulsar
+helm upgrade pulsar ./pulsar --namespace pulsar
+
+#11 redis
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+helm search repo bitnami/redis
+helm pull bitnami/redis
+helm install redis ./redis --namespace redis
+
+#12 superset
+helm repo add superset https://apache.github.io/superset
+helm repo update
+helm search repo superset/superset
+helm pull superset/superset --version 0.12.11 
+helm install superset ./superset --namespace superset
