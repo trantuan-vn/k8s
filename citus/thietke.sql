@@ -8,7 +8,8 @@ CREATE TABLE sqls (
 
 CREATE TABLE actions (
     action_id SERIAL PRIMARY KEY,
-    action_name VARCHAR(255) UNIQUE NOT NULL
+    action_name VARCHAR(255) UNIQUE NOT NULL, 
+    action_label VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE actions_sqls (
@@ -17,7 +18,7 @@ CREATE TABLE actions_sqls (
     sql_id INT REFERENCES sqls(sql_id),
     sql_order INT  NOT NULL
 );
-
+/*
 -- các bảng màn hình
 CREATE TABLE screens (
     screen_id SERIAL PRIMARY KEY,
@@ -49,19 +50,28 @@ CREATE TABLE screen_actions (
     action_label VARCHAR(255) NOT NULL,
     action_order INT NOT NULL -- thứ tự xuất hiện của action trên screen
 );
+*/
+CREATE TABLE screen_actions (
+    screen_action_id SERIAL PRIMARY KEY,
+    table_id INT REFERENCES business_tables(table_id),
+    action_id INT REFERENCES actions(action_id),
+    action_label VARCHAR(255) NOT NULL,
+    action_order INT NOT NULL -- thứ tự xuất hiện của action trên screen
+);
 
 -- các bảng ghi log
 -- log giao dịch trong ngày
-CREATE TABLE transaction_logs (
-    log_id SERIAL PRIMARY KEY,
-    screen_id INT REFERENCES screens(screen_id),
-    status VARCHAR(50) NOT NULL, -- Trạng thái của giao dịch ('pending', 'approved', 'rejected', etc.)
-    field_values JSONB -- Lưu trữ giá trị của các trường dưới dạng JSON
-);
+-- CREATE TABLE transaction_logs (
+--    log_id SERIAL PRIMARY KEY,
+--    screen_action_id INT REFERENCES screen_actions(screen_action_id),
+--    status VARCHAR(50) NOT NULL, -- Trạng thái của giao dịch ('pending', 'approved', 'rejected', etc.)
+--    field_values JSONB -- Lưu trữ giá trị của các trường dưới dạng JSON
+--);
 
 CREATE TABLE business_tables (
     table_id SERIAL PRIMARY KEY,
     table_name VARCHAR(255) UNIQUE NOT NULL, -- Tên bảng (users, groups, ...)
+    table_label VARCHAR(255) NOT NULL,
     is_archive BOOLEAN DEFAULT TRUE,
     description VARCHAR(255)          -- Mô tả bảng
 );
@@ -99,6 +109,8 @@ CREATE TABLE business_table_uniques (
     table_id INT NOT NULL REFERENCES business_tables(table_id), -- Liên kết với bảng business_tables
     field_id INT NOT NULL REFERENCES business_fields(field_id)
 );
+# Cài đặt pg_partman extension
+CREATE EXTENSION pg_partman;
 
 CREATE OR REPLACE FUNCTION generate_table() RETURNS VOID AS $$
 DECLARE
@@ -110,6 +122,7 @@ DECLARE
     table_name_var TEXT;
     field_name_var TEXT;
     primary_field_name TEXT;
+    year_part INT;
 BEGIN
     FOR record_a IN (SELECT * FROM business_tables) LOOP
         -- Tạo câu lệnh CREATE TABLE cho bảng chính
@@ -147,9 +160,26 @@ BEGIN
                 archive_sql := archive_sql || field_record.field_name || ' ' || field_record.field_type || ', ';
             END LOOP;
             -- Thêm trường archived_at và tạo ràng buộc unique
+            --archive_sql := archive_sql || 'archived_at TIMESTAMP NOT NULL DEFAULT NOW()) PARTITION BY RANGE (EXTRACT(YEAR FROM archived_at));';
             archive_sql := archive_sql || 'archived_at TIMESTAMP NOT NULL DEFAULT NOW());';
             -- Thực hiện tạo bảng archive
             EXECUTE archive_sql;
+
+            -- Tạo partition dựa trên năm hiện tại
+            --year_part := EXTRACT(YEAR FROM NOW());
+            --partition_sql := 'CREATE TABLE IF NOT EXISTS ' || record_a.table_name || '_archive_' || year_part;
+            --partition_sql := partition_sql || ' PARTITION OF ' || record_a.table_name || '_archive ';
+            --partition_sql := partition_sql || 'FOR VALUES FROM (' || year_part || ') TO (' || (year_part + 1) || ');';
+            --EXECUTE partition_sql;
+
+            SELECT partman.create_parent(
+                p_parent_table := record_a.table_name || '_archive',
+                p_control := 'archived_at',
+                p_type := 'time',
+                p_interval := '3 months'
+            );
+            -- Chạy bảo trì pg_partman để tự động tạo partition mới
+            SELECT run_maintenance(record_a.table_name || '_archive');
 
             -- Tạo trigger cho bảng chính để lưu dữ liệu vào bảng archive khi có thay đổi
             trigger_sql := 'CREATE TRIGGER trigger_' || record_a.table_name || '_archive ';
@@ -158,7 +188,7 @@ BEGIN
             
             -- Thực hiện tạo trigger
             EXECUTE trigger_sql;
-        END IF;
+        END IF; 
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
@@ -193,7 +223,7 @@ BEGIN
     END LOOP;
     
     -- Thêm giá trị archived_at là thời gian hiện tại
-    archive_sql := RTRIM(archive_sql, ', ') || ', NOW());';
+    archive_sql := RTRIM(archive_sql, ', ') || ');';
 
     -- Thực hiện câu lệnh INSERT INTO để lưu trữ dữ liệu cũ vào bảng archive
     EXECUTE archive_sql;
@@ -209,8 +239,8 @@ DECLARE
     unique_field_names TEXT := '';
     constraint_name TEXT;
     archive_constraint_name TEXT;
-    field_names TEXT := '';
-    archive_field_names TEXT := '';
+    field_names TEXT;
+    archive_field_names TEXT;
     is_archive BOOLEAN;
 BEGIN
     -- Lặp qua các bảng có unique_order trong bảng business_table_uniques
@@ -225,8 +255,10 @@ BEGIN
         WHERE table_id = record_table.table_id;
 
         -- Tạo tên constraint cho bảng chính
+        field_names:='';
         constraint_name := constraint_name || '_unique_';
-
+        archive_field_names:='archived_at, ';
+        archive_constraint_name := constraint_name || 'archived_at_'
         -- Lấy các tên trường trong business_fields
         FOR record_field IN (
             SELECT bf.field_name 
@@ -237,12 +269,14 @@ BEGIN
             field_names := field_names || record_field.field_name || ', ';
             archive_field_names := archive_field_names || record_field.field_name || ', ';
             constraint_name := constraint_name || record_field.field_name || '_';
+            archive_constraint_name := archive_constraint_name || record_field.field_name || '_';
         END LOOP;
 
         -- Xóa dấu phẩy cuối cùng
         field_names := RTRIM(field_names, ', ');
-        archive_field_names := RTRIM(archive_field_names, ', ') || ', archived_at';
-        archive_constraint_name := constraint_name || 'archived_at'; -- Tạo tên constraint cho bảng archive
+        constraint_name := RTRIM(constraint_name, '_')
+        archive_field_names :=  RTRIM(archive_field_names, ', ') ;
+        archive_constraint_name := RTRIM(archive_constraint_name, '_'); -- Tạo tên constraint cho bảng archive
 
         -- Tạo unique constraint cho bảng chính
         EXECUTE 'ALTER TABLE ' || constraint_name || ' DROP CONSTRAINT IF EXISTS ' || constraint_name;
@@ -253,44 +287,45 @@ BEGIN
             EXECUTE 'ALTER TABLE ' || constraint_name || '_archive DROP CONSTRAINT IF EXISTS ' || archive_constraint_name;
             EXECUTE 'ALTER TABLE ' || constraint_name || '_archive ADD CONSTRAINT ' || archive_constraint_name || ' UNIQUE (' || archive_field_names || ');';
         END IF;
-
-        -- Reset lại các giá trị cho bảng tiếp theo
-        field_names := '';
-        archive_field_names := '';
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
 
+/*
 CREATE OR REPLACE FUNCTION create_yearly_partitions() RETURNS void LANGUAGE plpgsql AS $$
 DECLARE
     r RECORD;
     archive_table_name TEXT;
     partition_name TEXT;
-    next_year_start DATE;
+    partition_sql TEXT;
+    year_part INT;
 BEGIN
     -- Lấy tất cả các bảng có is_archive = true
     FOR r IN (SELECT table_name FROM business_tables WHERE is_archive = TRUE) LOOP
         -- Xây dựng tên bảng archive
         archive_table_name := r.table_name || '_archive';
-        -- Xây dựng tên partition dựa vào năm
-        partition_name := archive_table_name || '_' || EXTRACT(YEAR FROM CURRENT_DATE + INTERVAL '1 year');
+        -- Lấy năm hiện tại
+        year_part := EXTRACT(YEAR FROM NOW());
 
-        -- Tạo partition cho năm mới
-        EXECUTE format('
-            CREATE TABLE IF NOT EXISTS %I PARTITION OF %I
-            FOR VALUES FROM (%L) TO (%L);',
-            partition_name,
-            archive_table_name,
-            EXTRACT(YEAR FROM CURRENT_DATE + INTERVAL '1 year')::TEXT || '-01-01',
-            (EXTRACT(YEAR FROM CURRENT_DATE + INTERVAL '2 years')::TEXT || '-01-01')
-        );
+        -- Xây dựng tên partition dựa vào năm hiện tại
+        partition_name := archive_table_name || '_' || year_part;
+
+        -- Tạo partition dựa trên năm hiện tại
+        partition_sql := 'CREATE TABLE IF NOT EXISTS ' || partition_name;
+        partition_sql := partition_sql || ' PARTITION OF ' || archive_table_name;
+        partition_sql := partition_sql || ' FOR VALUES FROM (' || year_part || ') TO (' || (year_part + 1) || ');';
+
+        -- Thực hiện tạo partition
+        EXECUTE partition_sql;
     END LOOP;
 END $$;
 
+-- Tạo pg_cron nếu chưa có
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
+-- Đặt lịch tự động chạy hàm mỗi năm vào ngày 1 tháng 1
 SELECT cron.schedule('Create Yearly Partitions', '0 0 1 1 *', 'CALL create_yearly_partitions()');
-
+*/
 
 
 CREATE OR REPLACE FUNCTION generate_select_sql_statements() RETURNS VOID AS $$

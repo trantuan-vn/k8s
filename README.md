@@ -12,6 +12,8 @@ kubectl create namespace citus
 kubectl create namespace microservices
 kubectl create namespace redis
 kubectl create namespace superset
+kubectl create namespace bigdata
+
 
 #4. tạo các serviceaccount
 kubectl create serviceaccount cert-manager-controller -n cert-manager
@@ -100,3 +102,13 @@ helm repo update
 helm search repo superset/superset
 helm pull superset/superset --version 0.12.11 
 helm install superset ./superset --namespace superset
+
+#13 hadoop hive-metastore hive
+kubectl apply -f 0_hdfs-config.yaml
+kubectl apply -f 2_hdfs-namenode-deployment.yaml  
+kubectl apply -f 3_hdfs-namenode-service.yaml
+kubectl apply -f 4_hdfs-datanode-deployment.yaml  
+kubectl apply -f 5_hdfs-datanode-service.yaml
+  
+
+

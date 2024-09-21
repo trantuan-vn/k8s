@@ -5,6 +5,7 @@ ALTER USER smartconsultor SUPERUSER;
 ALTER USER smartconsultor CREATEDB CREATEROLE;
 CREATE DATABASE smartconsultor;
 CREATE DATABASE superset;
+CREATE DATABASE metastore;
 -- master, all worker
 psql -U smartconsultor -d smartconsultor
 CREATE SCHEMA standing;

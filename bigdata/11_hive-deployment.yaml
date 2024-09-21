@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hive
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hiveserver2
+  template:
+    metadata:
+      labels:
+        app: hiveserver2
+    spec:
+      containers:
+      - name: hiveserver2
+        image: apache/hive:4.0.0
+        ports:
+        - containerPort: 10000
+        - containerPort: 10002
+        env:
+        - name: SERVICE_NAME
+          value: "hiveserver2"
+        - name: SERVICE_OPTS
+          value: "-Dhive.metastore.uris=thrift://metastore.bigdata.svc.cluster.local:9083"
+        - name: IS_RESUME
+          value: "true"
+        volumeMounts:
+        - name: warehouse-volume
+          mountPath: /opt/hive/data/warehouse
+      volumes:
+      - name: warehouse-volume
+        persistentVolumeClaim:
+          claimName: warehouse-pvc

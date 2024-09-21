@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metastore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hive-metastore
+  template:
+    metadata:
+      labels:
+        app: hive-metastore
+    spec:
+      containers:
+      - name: hive-metastore
+        image: apache/hive:4.0.0
+        ports:
+        - containerPort: 9083
+        env:
+        - name: SERVICE_NAME
+          value: "metastore"
+        - name: DB_DRIVER
+          value: "postgres"
+        - name: SERVICE_OPTS
+          value: "-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://citus-master.citus.svc.cluster.local:5432/metastore -Djavax.jdo.option.ConnectionUserName=smartconsultor -Djavax.jdo.option.ConnectionPassword=secret99"
+        volumeMounts:
+        - name: warehouse-volume
+          mountPath: /opt/hive/data/warehouse
+      volumes:
+      - name: warehouse-volume
+        persistentVolumeClaim:
+          claimName: warehouse-pvc

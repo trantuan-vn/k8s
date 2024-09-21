@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: namenode
+  namespace: bigdata   
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hdfs-namenode
+  template:
+    metadata:
+      labels:
+        app: hdfs-namenode
+    spec:
+      initContainers:
+      - name: "chown"
+        image: apache/hadoop:3
+        command:
+        - /bin/bash
+        - -c
+        - chown -R hadoop:hadoop /dfs &&
+          chmod g+s /dfs
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+        - name: dfs
+          mountPath: /dfs
+      containers:
+      - name: namenode
+        image: apache/hadoop:3
+        ports:
+        - containerPort: 9870
+          name: http-port
+        - containerPort: 8020
+          name: rpc-port
+        command:
+        - "/bin/bash"
+        - "/tmp/hadoop-config/bootstrap.sh"
+        - "-d"
+        - "namenode"         
+        volumeMounts:
+        - name: dfs
+          mountPath: /dfs
+        - name: hadoop-config-volume
+          mountPath: /tmp/hadoop-config
+      volumes:
+      - name: dfs
+        persistentVolumeClaim:
+          claimName: dfs
+      - name: hadoop-config-volume
+        configMap:
+          name: hadoop-config          
+  volumeClaimTemplates:
+  - metadata:
+      name: dfs
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 50Gi
+      storageClassName: standard          

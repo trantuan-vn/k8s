@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodemanager
+spec:
+  selector:
+    app: hdfs-nodemanager
+  ports:
+  - protocol: TCP
+    port: 8042
+    targetPort: 8042
+    name: http-port
