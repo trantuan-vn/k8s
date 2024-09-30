@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: metastore
+  namespace: bigdata   
 spec:
   replicas: 1
   selector:
@@ -22,12 +23,19 @@ spec:
           value: "metastore"
         - name: DB_DRIVER
           value: "postgres"
-        - name: SERVICE_OPTS
-          value: "-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://citus-master.citus.svc.cluster.local:5432/metastore -Djavax.jdo.option.ConnectionUserName=smartconsultor -Djavax.jdo.option.ConnectionPassword=secret99"
+        - name: METASTORE_PORT
+          value: "9083"          
         volumeMounts:
-        - name: warehouse-volume
-          mountPath: /opt/hive/data/warehouse
+        - name: hive-config-volume
+          mountPath: /opt/hive/conf/hive-site.xml
+          subPath: hive-site.xml
+        - name: jar-pvc-volume
+          mountPath: /opt/hive/lib/postgres.jar
+          subPath: postgres.jar           
       volumes:
-      - name: warehouse-volume
+      - name: hive-config-volume
+        configMap:
+          name: hive-config
+      - name: jar-pvc-volume
         persistentVolumeClaim:
-          claimName: warehouse-pvc
+          claimName: jar-pvc          

@@ -13,6 +13,7 @@ kubectl create namespace microservices
 kubectl create namespace redis
 kubectl create namespace superset
 kubectl create namespace bigdata
+kubectl create namespace zookeeper
 
 
 #4. tạo các serviceaccount
@@ -44,6 +45,7 @@ ALTER USER smartconsultor CREATEDB CREATEROLE;
 CREATE DATABASE smartconsultor;
 CREATE DATABASE superset;
 CREATE DATABASE keycloak;
+CREATE DATABASE metastore;
 
 -- master, all worker
 psql -U smartconsultor -d smartconsultor
@@ -104,11 +106,30 @@ helm pull superset/superset --version 0.12.11
 helm install superset ./superset --namespace superset
 
 #13 hadoop hive-metastore hive
-kubectl apply -f 0_hdfs-config.yaml
-kubectl apply -f 2_hdfs-namenode-deployment.yaml  
-kubectl apply -f 3_hdfs-namenode-service.yaml
-kubectl apply -f 4_hdfs-datanode-deployment.yaml  
-kubectl apply -f 5_hdfs-datanode-service.yaml
+cd v1.6
+kubectl apply -f 0_hadoop-config.yaml
+kubectl apply -f 0_hive-config.yaml
+kubectl apply -f 0_tez-config.yaml
+kubectl apply -f 1_hdfs-namenode-service.yaml
+kubectl apply -f 2_hdfs-resourcemanager-service.yaml
+kubectl apply -f 3_hdfs-namenode-resourcemanager-statefulset.yaml
+kubectl apply -f 4_hdfs-datanode-service.yaml
+kubectl apply -f 5_hdfs-datanode-nodemanager-statefulset.yaml
+kubectl apply -f 6_hive-metastore-service.yaml
+kubectl apply -f 7_hive-metastore-deployment.yaml
+kubectl apply -f 8_hive-service.yaml
+kubectl apply -f 9_hive-deployment.yaml
+
+#14 apache zookeeper
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+helm search repo bitnami/zookeeper
+helm pull bitnami/zookeeper --version 13.4.12 
+helm install zookeeper ./zookeeper --namespace zookeeper
+
+
+
+
   
 
 

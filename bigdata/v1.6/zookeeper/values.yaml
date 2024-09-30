@@ -1,0 +1,12 @@
+replicaCount: 3
+
+image:
+  repository: zookeeper
+  tag: latest
+
+persistence:
+  enabled: true
+  storageClass: standard
+  accessModes:
+    - ReadWriteOnce
+  size: 1Gi

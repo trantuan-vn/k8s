@@ -14,7 +14,15 @@ data:
       <property>
         <name>hadoop.tmp.dir</name>
         <value>/data/hadoop</value>
-      </property>       
+      </property>  
+      <property>
+        <name>hadoop.proxyuser.hadoop.hosts</name>
+        <value>*</value>
+      </property>
+      <property>
+        <name>hadoop.proxyuser.hadoop.groups</name>
+        <value>*</value>
+      </property>
     </configuration>
   hdfs-site.xml: |
     <?xml version="1.0" encoding="UTF-8"?>
@@ -27,14 +35,6 @@ data:
         <name>dfs.replication</name>
         <value>1</value>
       </property>
-      <property>
-        <name>dfs.datanode.use.datanode.hostname</name>
-        <value>false</value>
-      </property>
-      <property>
-        <name>dfs.client.use.datanode.hostname</name>
-        <value>false</value>
-      </property>      
       <property>
           <name>dfs.namenode.datanode.registration.ip-hostname-check</name>
           <value>false</value>
@@ -61,7 +61,7 @@ data:
         <value>false</value>
       </property>
       <property>
-        <name>yarn.nodemanager.delete-debug-delay-sec</name>
+        <name>yarn.nodemanager.delete.debug-delay-sec</name>
         <value>600</value>
       </property>
       <property>
@@ -70,7 +70,11 @@ data:
       </property>
       <property>
         <name>yarn.nodemanager.aux-services</name>
-        <value>mapreduce_shuffle</value>
+        <value>tez_shuffle</value>
+      </property>
+      <property>
+        <name>yarn.nodemanager.aux-services.tez_shuffle.class</name>
+        <value>org.apache.tez.auxservices.ShuffleHandler</value>
       </property>
     </configuration>
   mapred-site.xml: |
@@ -86,6 +90,10 @@ data:
       </property>
       <property>
         <name>mapreduce.reduce.env</name>
+        <value>HADOOP_MAPRED_HOME=$HADOOP_HOME</value>
+      </property>
+      <property>
+        <name>yarn.app.mapreduce.am.env</name>
         <value>HADOOP_MAPRED_HOME=$HADOOP_HOME</value>
       </property>
       <property>
@@ -110,7 +118,6 @@ data:
         exit 1
         fi
     done
-
     # copy hadoop-http-auth-signature-secret
     cp ${CONFIG_DIR}/hadoop-http-auth-signature-secret $HADOOP_HOME/hadoop-http-auth-signature-secret    
     # installing libraries if any - (resource urls added comma separated to the ACP system variable)

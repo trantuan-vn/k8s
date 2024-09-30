@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hive-config
+  namespace: bigdata 
+data:
+  hive-site.xml: |
+    <?xml version="1.0"?>
+    <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+    <configuration>
+      <property>
+        <name>hive.server2.enable.doAs</name>
+        <value>true</value>
+      </property>    
+      <property>
+        <name>hadoop.proxyuser.hadoop.hosts</name>
+        <value>*</value>
+      </property>
+      <property>
+        <name>hadoop.proxyuser.hadoop.groups</name>
+        <value>*</value>
+      </property>      
+      <property> 
+        <name>hive.metastore.event.db.notification.api.auth</name> 
+        <value>false</value>
+      </property> 
+      <property> 
+        <name>hadoop.proxyuser.hive.hosts</name> 
+        <value>*</value> 
+      </property>  
+      <property> 
+        <name>hadoop.proxyuser.hive.groups</name> 
+        <value>*</value> 
+      </property>    
+      #Tích hợp với Hive Metastore
+      <property>
+        <name>hive.metastore.uris</name>
+        <value>thrift://metastore:9083</value>
+      </property>
+      <property>
+        <name>javax.jdo.option.ConnectionURL</name>
+        <value>jdbc:postgresql://citus-master.citus.svc.cluster.local:5432/metastore</value>
+      </property>
+      <property>
+        <name>javax.jdo.option.ConnectionDriverName</name>
+        <value>org.postgresql.Driver</value>
+      </property>
+      <property>
+        <name>javax.jdo.option.ConnectionUserName</name>
+        <value>smartconsultor</value>
+      </property>
+      <property>
+        <name> javax.jdo.option.ConnectionPassword</name>
+        <value>secret99</value>
+      </property>
+      # warehouse hdfs
+      <property>
+        <name>hive.metastore.warehouse.dir</name>
+        <value>hdfs://namenode:8020/user/hive/warehouse</value>
+      </property>
+    </configuration>
+  core-site.xml: |
+    <?xml version="1.0"?>
+    <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+    <configuration>
+      <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://namenode:8020</value>
+      </property>    
+    </configuration>
