@@ -1,0 +1,12 @@
+hadoop fs -copyFromLocal /opt/tez/share/tez.tar.gz /apps/tez.tar.gz
+hadoop fs -chmod 755 /apps/tez.tar.gz
+#hadoop fs -rm -r /apps/tez
+
+beeline -u 'jdbc:hive2://localhost:10000/' -n hadoop
+show tables;
+create table hive_example(a string, b int) partitioned by(c int);
+alter table hive_example add partition(c=1);
+insert into hive_example partition(c=1) values('a', 1);
+select count(distinct a) from hive_example;
+select sum(b) from hive_example;
+

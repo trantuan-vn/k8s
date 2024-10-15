@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<configuration>
+  <property>
+    <name>tez.lib.uris</name>
+    <value>hdfs://namenode-resourcemanager:8020/apps/tez.tar.gz</value>
+  </property>     
+  <property>
+    <name>tez.staging-dir</name>
+    <value>/tmp/tez</value>
+  </property> 
+  <property>
+    <name>tez.queue.name</name>
+    <value>default</value>
+  </property>      
+  <property>
+      <name>tez.use.cluster.hadoop-libs</name>
+      <value>true</value>
+  </property>  
+  <!--
+  # Cấu hình dành riêng cho Tez App Master
+  <property>
+    <name>tez.am.shuffle.auxiliary-service.id</name>
+    <value>tez_shuffle</value>
+  </property>
+  <property>
+    <name>tez.am.resource.memory.mb</name>
+    <value>2048</value>
+    <description>The amount of memory allocated for the Tez App Master.</description>
+  </property>
+  <property>
+    <name>tez.am.resource.cpu.vcores</name>
+    <value>1</value>
+    <description>The number of CPU cores allocated for the Tez App Master.</description>
+  </property>
+  <property>
+    <name>tez.am.launch.cmd-opts</name>
+    <value>-Xmx1536m</value>
+    <description>Java options for the Tez App Master.</description>
+  </property>
+  # lib, tmp tren hdfs
+  # cache     
+  <property>
+      <name>tez.runtime.io.sort.mb</name>
+      <value>256</value>
+  </property>
+  <property>
+      <name>tez.runtime.unordered.output.buffer.size-mb</name>
+      <value>100</value>
+  </property>
+  # timeout
+  <property>
+    <name>tez.session.am.dag.submit.timeout.secs</name>
+    <value>600</value>
+  </property>  
+  -->    
+</configuration>

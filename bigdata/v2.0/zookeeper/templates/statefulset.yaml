@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: zookeeper
+spec: 
+  serviceName: zookeeper
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      containers:
+      - name: zookeeper
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        ports:
+        - containerPort: 2181
+          name: client
+        - containerPort: 2888
+          name: follower
+        - containerPort: 3888
+          name: election
+        - containerPort: 8080
+          name: http
+        command:
+        - /bin/sh
+        - -c
+        - |
+          export ZOO_MY_ID=$(($(basename $HOSTNAME | cut -d '-' -f 2) + 1))
+          echo $ZOO_MY_ID > /data/myid
+          # Set ZOO_SERVERS dynamically
+          ZOO_SERVERS=""
+          REPLICA_COUNT={{ .Values.replicaCount }}
+          i=0
+          while [ $i -lt $REPLICA_COUNT ]; do
+            if [ "$i" -eq $(basename $HOSTNAME | cut -d '-' -f 2) ]; then
+              ZOO_SERVERS="${ZOO_SERVERS}server.$((i + 1))=0.0.0.0:2888:3888;2181 "
+            else
+              ZOO_SERVERS="${ZOO_SERVERS}server.$((i + 1))={{ .Release.Name }}-$i.{{ .Release.Name }}:2888:3888;2181 "
+            fi
+            i=$(expr $i + 1)
+          done          
+          export ZOO_SERVERS=$ZOO_SERVERS  
+          /docker-entrypoint.sh zkServer.sh start-foreground
+        volumeMounts:
+        - name: datadir
+          mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: datadir
+    spec:
+      accessModes: {{ .Values.persistence.accessModes | toJson }}
+      resources:
+        requests:
+          storage: {{ .Values.persistence.size }}
+      storageClassName: {{ .Values.persistence.storageClass }}

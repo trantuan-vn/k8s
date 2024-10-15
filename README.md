@@ -47,6 +47,7 @@ CREATE DATABASE superset;
 CREATE DATABASE keycloak;
 CREATE DATABASE metastore;
 
+
 -- master, all worker
 psql -U smartconsultor -d smartconsultor
 CREATE SCHEMA standing;
@@ -105,27 +106,33 @@ helm search repo superset/superset
 helm pull superset/superset --version 0.12.11 
 helm install superset ./superset --namespace superset
 
-#13 hadoop hive-metastore hive
-cd v1.6
-kubectl apply -f 0_hadoop-config.yaml
-kubectl apply -f 0_hive-config.yaml
-kubectl apply -f 0_tez-config.yaml
-kubectl apply -f 1_hdfs-namenode-service.yaml
-kubectl apply -f 2_hdfs-resourcemanager-service.yaml
-kubectl apply -f 3_hdfs-namenode-resourcemanager-statefulset.yaml
-kubectl apply -f 4_hdfs-datanode-service.yaml
-kubectl apply -f 5_hdfs-datanode-nodemanager-statefulset.yaml
-kubectl apply -f 6_hive-metastore-service.yaml
-kubectl apply -f 7_hive-metastore-deployment.yaml
-kubectl apply -f 8_hive-service.yaml
-kubectl apply -f 9_hive-deployment.yaml
-
-#14 apache zookeeper
+#13 apache zookeeper
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 helm search repo bitnami/zookeeper
 helm pull bitnami/zookeeper --version 13.4.12 
 helm install zookeeper ./zookeeper --namespace zookeeper
+
+#14 hadoop hive-metastore hive
+cd bigdata/jar_pvc
+kubectl apply -f jar_pvc.yaml
+kubectl apply -f copy-pod.yaml
+kubectl cp ./tez copy-pod:/mnt/data  -n bigdata
+cd bigdata/v2.0
+kubectl apply -f 0_hadoop-config.yaml
+kubectl apply -f 1_hive-config.yaml
+kubectl apply -f 2_hdfs-namenode-resourcemanager-service.yaml
+kubectl apply -f 3_hdfs-namenode-resourcemanager-statefulset.yaml
+kubectl apply -f 4_hdfs-datanode-nodemanager-service.yaml
+kubectl apply -f 5_hdfs-datanode-nodemanager-statefulset.yaml
+kubectl apply -f 6_hive-metastore-service.yaml
+kubectl apply -f 7_hive-metastore-deployment.yaml
+kubectl apply -f 8_hive-service.yaml
+kubectl apply -f 9_hive-deployment.yaml
+#hive: /tmp/root/hive.log
+#resourcemanager: /var/log/hadoop/hadoop-root-resourcemanager-namenode-resourcemanager-0.out 
+#nodemanager: /var/log/hadoop/hadoop-root-nodemanager-datanode-nodemanager-0.out 
+#resourcemanager,nodemanager: yarn node -list
 
 
 

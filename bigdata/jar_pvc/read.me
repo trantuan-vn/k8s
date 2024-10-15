@@ -1,4 +1,7 @@
-kubectl apply -f files_pvc.yaml
+kubectl apply -f jar_pvc.yaml
 kubectl apply -f copy-pod.yaml
 kubectl cp ./postgresql-42.7.3.jar copy-pod:/mnt/data/postgres.jar  -n bigdata
+kubectl cp ~/Downloads/tez copy-pod:/mnt/data  -n bigdata
+kubectl cp ./tez-site.xml copy-pod:/mnt/data/tez/conf/tez-site.xml  -n bigdata
 kubectl delete pod/copy-pod -n bigdata
+

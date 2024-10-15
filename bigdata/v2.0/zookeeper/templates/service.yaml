@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: zookeeper
+spec:
+  clusterIP: None
+  selector:
+    app: zookeeper
+  ports:
+  - protocol: TCP
+    name: client
+    port: 2181
+    targetPort: 2181
+  - protocol: TCP
+    name: leader-election
+    port: 2888
+    targetPort: 2888
+  - protocol: TCP
+    name: quorum
+    port: 3888
+    targetPort: 3888
+  - protocol: TCP
+    name: http
+    port: 8080
+    targetPort: 8080
