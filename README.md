@@ -113,7 +113,7 @@ helm search repo bitnami/zookeeper
 helm pull bitnami/zookeeper --version 13.4.12 
 helm install zookeeper ./zookeeper --namespace zookeeper
 
-#14 hadoop hive-metastore hive
+#14 hadoop(3.4.0) hive-metastore hive(4.0.0) tez(0.10.4)
 cd bigdata/jar_pvc
 kubectl apply -f jar_pvc.yaml
 kubectl apply -f copy-pod.yaml
