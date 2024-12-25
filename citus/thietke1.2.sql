@@ -26,7 +26,10 @@ CREATE TABLE system_parameters.business_tables (
     table_id SERIAL PRIMARY KEY,
     table_name VARCHAR(255) UNIQUE NOT NULL, -- Tên bảng (users, groups, ...)
     table_label VARCHAR(255) NOT NULL,
-    is_archive BOOLEAN DEFAULT TRUE,
+    is_archive BOOLEAN DEFAULT FALSE,
+    day_range INT DEFAULT 31,
+    message_type VARCHAR(50) NOT NULL DEFAULT 'ISO20022',
+    is_screen BOOLEAN DEFAULT TRUE,
     description VARCHAR(255)          -- Mô tả bảng
 );
 
@@ -71,6 +74,13 @@ CREATE TABLE system_parameters.business_table_uniques (
     field_id INT NOT NULL REFERENCES system_parameters.business_fields(field_id)
 );
 
+CREATE TABLE IF NOT EXISTS system_parameters.temp_execution_log (
+    log_id SERIAL PRIMARY KEY,
+    executed_query TEXT,
+    error_message TEXT,
+    executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE OR REPLACE FUNCTION system_parameters.generate_table() RETURNS VOID AS $$
 DECLARE
     record_a RECORD;
@@ -82,8 +92,7 @@ DECLARE
     field_name_var TEXT;
     primary_field_name TEXT;
     year_part INT;
-	today_partition_sql TEXT;
-	history_partition_sql TEXT;
+    history_create_sql TEXT;
 BEGIN
     FOR record_a IN (SELECT * FROM system_parameters.business_tables) LOOP
         -- Tạo câu lệnh CREATE TABLE cho bảng chính
@@ -110,22 +119,41 @@ BEGIN
             create_sql := create_sql || ', ';
         END LOOP;
 
-        -- Thêm cột business_date dùng cho phân vùng
-        create_sql := create_sql || 'business_date DATE NOT NULL';
-
-        -- Kết thúc câu lệnh tạo bảng và chỉ định phân vùng theo RANGE trên business_date
-        create_sql := create_sql || ') PARTITION BY RANGE (business_date);';
-
-        -- Thực hiện tạo bảng chính
-        EXECUTE create_sql;
-        -- Tạo bảng phân vùng today cho ngày hiện tại
-        today_partition_sql := 'CREATE TABLE IF NOT EXISTS today.' || record_a.table_name || '_today PARTITION OF today.' || record_a.table_name || ' FOR VALUES FROM (''' || current_date || ''') TO (''' || current_date + INTERVAL '1 day' || ''');';
-        EXECUTE today_partition_sql;
         -- Nếu bảng có is_archive = true, tạo bảng archive
         IF record_a.is_archive THEN
-            -- Tạo bảng phân vùng history cho 119 ngày trước đó
-            history_partition_sql := 'CREATE TABLE IF NOT EXISTS today.' || record_a.table_name || '_history PARTITION OF today.' || record_a.table_name || ' FOR VALUES FROM (''' || current_date - INTERVAL '119 days' || ''') TO (''' || current_date || ''');';
-            EXECUTE history_partition_sql;
+            -- Thêm cột business_date dùng cho phân vùng
+            create_sql := create_sql || 'business_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)';
+            
+            -- Tạo bảng phân vùng today cho ngày hiện tại
+            -- Ghi log và thực thi câu lệnh
+            INSERT INTO system_parameters.temp_execution_log (executed_query) VALUES (create_sql);
+            BEGIN
+                EXECUTE create_sql;
+            EXCEPTION WHEN OTHERS THEN
+                INSERT INTO system_parameters.temp_execution_log (executed_query, error_message)
+                VALUES (create_sql, SQLERRM);
+            END;
+
+            -- Tạo bảng phân vùng history cho n ngày trước đó
+            history_create_sql := REPLACE(create_sql, 'CREATE TABLE IF NOT EXISTS today.', 'CREATE TABLE IF NOT EXISTS history.');
+
+            INSERT INTO system_parameters.temp_execution_log (executed_query) VALUES (history_create_sql);
+            BEGIN
+                EXECUTE history_create_sql;
+            EXCEPTION WHEN OTHERS THEN
+                INSERT INTO system_parameters.temp_execution_log (executed_query, error_message)
+                VALUES (history_create_sql, SQLERRM);
+            END;
+        ELSE
+            -- Bỏ dấu phẩy cuối cùng và thêm dấu đóng ngoặc )
+            create_sql := left(create_sql, length(create_sql) - 2) || ');';
+            INSERT INTO system_parameters.temp_execution_log (executed_query) VALUES (create_sql);
+            BEGIN
+                EXECUTE create_sql;
+            EXCEPTION WHEN OTHERS THEN
+                INSERT INTO system_parameters.temp_execution_log (executed_query, error_message)
+                VALUES (create_sql, SQLERRM);
+            END;
         END IF; 
     END LOOP;
 END;
